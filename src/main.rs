@@ -1,6 +1,9 @@
 extern crate minifb;
 extern crate rand;
 
+mod cpu;
+mod disasm;
+
 use minifb::{Key, WindowOptions, Window, Scale};
 
 const WIDTH: usize = 256;
