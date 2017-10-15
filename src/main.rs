@@ -1,15 +1,26 @@
+#[macro_use]
+extern crate bitfield;
 extern crate minifb;
 extern crate rand;
 
 mod cpu;
 mod disasm;
+mod nes;
+mod mem;
+mod ppu;
 
 use minifb::{Key, WindowOptions, Window, Scale};
+use nes::*;
 
 const WIDTH: usize = 256;
 const HEIGHT: usize = 240;
 
 fn main() {
+
+    let mut nes = Nes::new();
+
+    step(&mut nes);
+
     // window test stuff
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
 

@@ -4,8 +4,8 @@ use std::fmt::Write;
 
 // simple trait for memory operations
 pub trait Bus {
-    fn read(&mut self, a: usize) -> u8;
-    fn write(&mut self, a: usize, v: u8); 
+    fn read<'a>(&'a mut self, a: usize) -> u8;
+    fn write<'a>(&'a mut self, a: usize, v: u8); 
 }
 
 // 6502 flags
@@ -69,6 +69,8 @@ pub struct P65 {
     s: u8,
     pub pc: u16,        // fixme privatize
 
+    pub ram: [u8; 0x0800],
+
 // emulator state
     pub cycle: u64,
     pub ts: u8,
@@ -96,6 +98,7 @@ impl fmt::Debug for P65 {
 impl P65 {
     pub fn new() -> P65 {
         P65 { 
+            ram: [0; 0x0800],
             a:  0xaa, 
             x:  0, 
             y:  0, 

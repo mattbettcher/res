@@ -6,3 +6,4 @@ authors = ["Matthew Bettcher <mattbettcher@gmail.com>"]
 [dependencies]
 minifb = "0.10.3"
 rand = "0.3.15"
+bitfield = "0.12.0"
