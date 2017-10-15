@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
-//use bitfield::{Bit, BitRange};
-
+use mmc::mapper::Mapper;
 
 // nt = name table
 // bg = background
@@ -119,6 +118,8 @@ pub struct PPU {
     vram_addr: u16,           // this is actually only 14 bits
 
     io_flipflop: bool,        // write flipflop for ports 2005 & 2006 - 
+
+    cycles: usize,
 }
 
 impl PPU {
@@ -135,12 +136,22 @@ impl PPU {
             hori_scroll_origin: 0,
             vert_scroll_origin: 0,
             vram_addr: 0,
-            io_flipflop: false
+            io_flipflop: false,
+            cycles: 0
         }
     }
 
-    pub fn step() {
-
+    pub fn step(&mut self, _mapper: &mut Mapper, cycles: usize) -> bool {
+        self.cycles += cycles;
+        // fake ppu vblank
+        //if self.ctrl_reg_1.nmi_on_vblank() {
+            if self.cycles >= 1000 {
+                self.status.set_vblank_flag(true);
+                self.cycles = 0;
+                return true
+            }
+        //}
+        false
     }
 
     // i/o ports for ppu (mapped to CPU memory 0x2000-0x2007 and mirrored through 0x3fff)
@@ -149,13 +160,13 @@ impl PPU {
 
         // todo - this is not done. many of these registers return different under different conditions, need to emulate it here!
         match address {
-            0x2000 => self.ctrl_reg_1.get(),
-            0x2001 => self.ctrl_reg_2.get(),
+            0 => self.ctrl_reg_1.get(),
+            1 => self.ctrl_reg_2.get(),
             // need to reset 1st/2nd-write flip-flop (used by port 2005 & 2006)
             // reading also resets vblank_flag
-            0x2002 => self.status.get(),    
-            0x2003 => self.spr_addr,
-            0x2004 => { 
+            2 => self.status.get(),    
+            3 => self.spr_addr,
+            4 => { 
                 // to maintain highlevel sprite design, this is way over complicated
                 let temp_spr = &self.oam[(self.spr_addr / 4) as usize]; // get the sprite we are writing to
                 match self.spr_addr % 4 {
@@ -167,8 +178,8 @@ impl PPU {
                 }},
             //0x2005 => ,   // can't read 2005????
             //0x2006 => ,   // can't read 2006????
-            0x2007 => {
-                let addr = self.vram[self.vram_addr as usize];
+            7 => {
+                let addr = self.vram[(self.vram_addr - 0x2000) as usize];
                 if self.ctrl_reg_1.vram_addr_inc() {
                     self.vram_addr += 32;
                 } else {
@@ -183,11 +194,11 @@ impl PPU {
     pub fn write_reg(&mut self, address: usize, data: u8) {
          // todo - this is not done. many of these registers can be written to multiple times, need to emulate it here!
         match address {
-            0x2000 => self.ctrl_reg_1.set(data),
-            0x2001 => self.ctrl_reg_2.set(data),
-            0x2002 => self.status.set(data),
-            0x2003 => self.spr_addr = data,
-            0x2004 => { 
+            0 => self.ctrl_reg_1.set(data),
+            1 => self.ctrl_reg_2.set(data),
+            2 => self.status.set(data),
+            3 => self.spr_addr = data,
+            4 => { 
                 // to maintain highlevel sprite design, this is way over complicated
                 let addr = (self.spr_addr / 4) as usize;
                 match self.spr_addr % 4 {
@@ -199,7 +210,7 @@ impl PPU {
                 }
                 self.spr_addr += 1;     // when we write to oam we must inc the address after
                 },
-            0x2005 => {
+            5 => {
                 if !self.io_flipflop {
                     // first write
                     self.hori_scroll_origin = data;
@@ -210,7 +221,7 @@ impl PPU {
                     self.io_flipflop = false;
                 }
             },
-            0x2006 => {
+            6 => {
                 if !self.io_flipflop {
                     // first write
                     self.vram_addr &= 0xff;     // clear top 8 bits
@@ -223,8 +234,8 @@ impl PPU {
                     self.io_flipflop = false;
                 }
             },
-            0x2007 => {
-                self.vram[self.vram_addr as usize] = data;
+            7 => {
+                self.vram[(self.vram_addr - 0x2000) as usize] = data;
                 if self.ctrl_reg_1.vram_addr_inc() {
                     self.vram_addr += 32;
                 } else {
