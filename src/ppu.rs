@@ -10,6 +10,7 @@
 
 // breaking down sprite attributes using bitfield
 bitfield! {
+    #[derive(Copy, Clone)]
     pub struct SpriteAttributes(u8);
     impl Debug;
     #[inline]
@@ -27,6 +28,7 @@ bitfield! {
 }
 
 bitfield! {
+    #[derive(Copy, Clone)]
     pub struct CtrlReg1(u8);
     impl Debug;
     #[inline]
@@ -49,6 +51,7 @@ bitfield! {
 }
 
 bitfield! {
+    #[derive(Copy, Clone)]
     pub struct CtrlReg2(u8);
     impl Debug;
     #[inline]
@@ -69,6 +72,7 @@ bitfield! {
 }
 
 bitfield! {
+    #[derive(Copy, Clone)]
     pub struct StatusReg(u8);
     impl Debug;
     #[inline]
@@ -84,6 +88,7 @@ bitfield! {
 }
 
 // broke down the sprites for easier access
+#[derive(Copy, Clone)]
 pub struct Spr {
     // vertical position - 1
     pub y: u8,
@@ -118,7 +123,24 @@ pub struct PPU {
 
 impl PPU {
     pub fn new() -> Self {
-        unimplemented!()
+        PPU {
+            vram: [0; 0x1000],      // vram should probably be cleared to random values, not 0
+            oam: [Spr{x:0, y:0, tile: 0, attrib: SpriteAttributes(0)}; 64],
+            palette: [0; 0x20],
+            oam_sort_index: [0; 8],
+            ctrl_reg_1: CtrlReg1(0),    // need to set the starting bits!
+            ctrl_reg_2: CtrlReg2(0),
+            status: StatusReg(0),
+            spr_addr: 0,
+            hori_scroll_origin: 0,
+            vert_scroll_origin: 0,
+            vram_addr: 0,
+            io_flipflop: false
+        }
+    }
+
+    pub fn step() {
+
     }
 
     // i/o ports for ppu (mapped to CPU memory 0x2000-0x2007 and mirrored through 0x3fff)

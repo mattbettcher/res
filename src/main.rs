@@ -8,6 +8,7 @@ mod disasm;
 mod nes;
 mod mem;
 mod ppu;
+mod mmc;
 
 use minifb::{Key, WindowOptions, Window, Scale};
 use nes::*;
